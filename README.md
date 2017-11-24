@@ -1,41 +1,57 @@
 
 ### CSC361: Computer Communications and Networks  
 #### Programming Assignment2 - Reliable Datagram Program :stuck_out_tongue_closed_eyes:
-
------
-#### Introduction  
-
-    So far, you have implemented a Simple Web Server following the Hyper Text Transfer Protocol
-    (HTTP) in the first programming assignment (P1). Good job! But very soon you have found
-    that the simple web server is not always working reliably, due to the fact that it just relies on the
-    unreliable User Datagram Protocol (UDP). For example, if the HTTP request or response messages
-    are larger than what a normal UDP packet can accommodate, multiple UDP packets have to be
-    sent over the network. These packets may get lost, duplicated, reordered or corrupted along the
-    way, and neither the sender nor the receiver has the capability to recover them. In addition, a fast
-    sender can send packets much faster than how much the receiver can handle and may potentially
-    overflow the receiver’s buffer and cause packet loss, even if the packets have arrived at the receiver.
-    Further, the sender should be able to indicate to the receiver the end of the request or response
-    messages, so the receiver does not need to wait any further for more packets.
-    Therefore, you need to add some flow control and error control capabilities, as well as the start
-    and finish indicators, to UDP, leading to a “new” protocol that we call CSC361 “Reliable Datagram
-    Protocol” or RDP 1. In this programming assignment, you will complete the design of the CSC361
-    RDP protocol and implement it using the datagram (DGRAM) socket Application Programming
-    Interface (API) with UDP. The goal is to transfer a text file from a sender to a receiver through
-    the Linksys router in ECS360 that emulates various network impairments such as packet loss,
-    duplication, reordering and corruption in a real network.
-    In this assignment, only the assignment requirements and basic design are provided, and you
-    have the freedom to create your own detailed design and implement it. Be creative, but you should
-    be able to justify your own design choices.
 ----
-#### Schedule
-    Date                        Lab Lecture and Tutorial                           Tasks Milestones
-    Feb 20/21/22/23         P2 Spec, RDP header, Connection Mgmt (CM)            RDP header done
-    Feb 27/28/Mar 1/2       Flow Control (FC) and Error Control (EC)             CM done, FC half-way
-    Mar 6/7/8/9             network impairments and NAT                          FC done, first due; EC half-way
-    Mar 13/14/15/16         feedback, debug and test                             CM, FC and EC all done
-    Mar 20/21/22/23                 demo                                         all done and tested;  second due
-----
-#### Requirements
+    1st step compile all the files:
+         type: make
 
+    2rd step run sender file:
+         type: ./sender 192.168.1.100 8080 10.10.1.100 8080 sent.dat
+
+    3rd step run receivedr file:
+         open another terminal in the same directory,
+         type: ./receiver 10.10.1.100 8080 received.dat
+----
+#### Code Design:
+    I structed a header using a char array with length 1024 (in sender.c) to
+    achieve the transmission of header info and file data between sender and receiver.
+
+    in the header, I stored all the event_types (eg. DAT, ACK ,SYN, FIN, RST) and I use
+    the value of '0' or '1' to stand for the existence of each of them. Also, I stored
+    sequence number, ack number, payload size, and window size in the header as well.
+    the total header info is from header[0] to header[83].
+    And after that, I store the file data from header[100] to header[1000], so that each
+    time the only packet I'm going to transform is the header,which makes it simple and easy to read.
+----
+#### Activities
+    sender send SYN packet to receiver;
+    then receiver send SYN+ACK to sender; 
+    then sender send DAT to receiver;
+    then receiver send DAT+ACK to sender;
+    then sender send DAT to receiver;
+    then receiver send DAT+ACK to sender; (repeat doing this)
+    ...
+    (until the data of file is transfered)
+    then sender send FIN to receiver;
+    then receiver send FIN+ACK to sender (and quit);
+    when sender received the FIN+ACK packet, it quit as well.
+
+    therefore, all the packets with a flag of ACK should be from receiver.
+    others should be from sender.
+----
+#### Code structure
+    the sender will be the one to initate the connection by sending the very first SYN packet 
+    both of sender and receiver will have a while loop to wait for the activity on socket from the other side
+    sender side: 
+        if he receive the header from receiver, it will response according to those ACK flags on the header
+        if he didn't get any response, he will resent the header to receiver, it could be one of SYN DAT and FIN, whatever
+        he send last.
+    receiver side: 
+        if he receive the header from receiver, it will response according to those flags on the header
+        and send SYN packets to sender.
+        if he didn't get any response, it will be simple: he just wait. wait for sender try to connect him again.
+ ----
+ #### More info
+     refer to `p2-1.pdf`
 
 
