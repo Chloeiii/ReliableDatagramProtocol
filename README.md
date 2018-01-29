@@ -1,6 +1,6 @@
 
 ### CSC361: Computer Communications and Networks  
-#### Based on UDP - Reliable Datagram Program :stuck_out_tongue_closed_eyes:
+#### Based on UDP - Reliable Datagram Protocol :stuck_out_tongue_closed_eyes:
 ----
     1st step compile all the files:
          type: make
