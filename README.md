@@ -13,37 +13,34 @@
          type: ./receiver 10.10.1.100 8080 received.dat
 ----
 #### Code Design:
-    I structed a header using a char array with length 1024 (in sender.c) to
-    achieve the transmission of header info and file data between sender and receiver.
+    I structed a char array(length of 1024) as the header to achieve the transmission of 
+    header info and file data between sender and receiver.
 
-    in the header, I stored all the event_types (eg. DAT, ACK ,SYN, FIN, RST) and I use
-    the value of '0' or '1' to stand for the existence of each of them. Also, I stored
-    sequence number, ack number, payload size, and window size in the header as well.
-    the total header info is from header[0] to header[83].
-    And after that, I store the file data from header[100] to header[1000], so that each
-    time the only packet I'm going to transform is the header,which makes it simple and easy to read.
+    event_types (DAT, ACK ,SYN, FIN, RST), sequence number, ack number, payload size, 
+    and window size info are located in header[0] to [83].
+    file data are stored in header[100] to [1000].
 ----
-#### Activities
+#### Activities (normal case without package loss)
     sender send SYN packet to receiver;
-    then receiver send SYN+ACK to sender; 
-    then sender send DAT to receiver;
-    then receiver send DAT+ACK to sender;
-    then sender send DAT to receiver;
-    then receiver send DAT+ACK to sender; (repeat doing this)
+    receiver send SYN+ACK back to sender; 
+    sender send DAT to receiver;
+    receiver send DAT+ACK back to sender;
+    sender send DAT to receiver;
+    receiver send DAT+ACK to sender; (repeat)
     ...
     (until the data of file is transfered)
-    then sender send FIN to receiver;
-    then receiver send FIN+ACK to sender (and quit);
+    sender send FIN to receiver;
+    receiver send FIN+ACK to sender (and quit);
     when sender received the FIN+ACK packet, it quit as well.
 
     therefore, all the packets with a flag of ACK should be from receiver.
     others should be from sender.
 ----
 #### Code structure
-    the sender will be the one to initate the connection by sending the very first SYN packet 
-    both of sender and receiver will have a while loop to wait for the activity on socket from the other side
+    the sender will be the one to initate the connection by sending the very first SYN packet. 
+    both sender and receiver have a while loop to wait for the activity on socket from the other side
     sender side: 
-        if he receive the header from receiver, it will response according to those ACK flags on the header
+        if he receive the header from receiver, it will response according to ACK flags on the header
         if he didn't get any response, he will resent the header to receiver, it could be one of SYN DAT and FIN, whatever
         he send last.
     receiver side: 
@@ -53,5 +50,3 @@
  ----
  #### More info
      refer to `p2-1.pdf`
-
-
